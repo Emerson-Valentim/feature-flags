@@ -1,34 +1,33 @@
 package main
 
 import (
+	"errors"
+	"feature-flag/go/ports/kafka"
 	"fmt"
 	"log"
-
-	"github.com/IBM/sarama"
+	"strings"
 )
 
 func main() {
-	// Create a new Kafka consumer
-	consumer, err := sarama.NewConsumer([]string{"kafka:9092"}, nil)
-	if err != nil {
-		log.Fatal("Error creating Kafka consumer:", err)
-	}
-	defer consumer.Close()
+	kafkaConnector := kafka.NewKafkaConnection("kafka:9092", "consumer")
 
-	// Define the Kafka topic
+	consumer, err := kafkaConnector.Consumer()
+
 	topic := "test-topic"
 
-	// Consume messages from the Kafka topic
-	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetOldest)
+	err = consumer.Start(topic, 0, onMessage)
+
 	if err != nil {
 		log.Fatal("Error consuming partition:", err)
 	}
-	defer partitionConsumer.Close()
+}
 
-	for {
-		select {
-		case msg := <-partitionConsumer.Messages():
-			fmt.Printf("Received message: %s\n", string(msg.Value))
-		}
+func onMessage(message string) error {
+	if strings.Contains(message, "fail") {
+		return errors.New("Failed to consume the message")
 	}
+
+	fmt.Printf("Received message: %s\n", message)
+
+	return nil
 }

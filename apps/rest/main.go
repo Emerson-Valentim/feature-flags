@@ -1,35 +1,26 @@
 package main
 
 import (
+	"feature-flag/go/ports/kafka"
 	"fmt"
 	"log"
 
-	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// Create a new Gin router
 	router := gin.Default()
 
-	// Define a route
+	kafkaConnector := kafka.NewKafkaConnection("kafka:9092", "never-mind")
+
+	producer, err := kafkaConnector.Producer()
+
+	topic := "test-topic"
+	message := "Hello, Kafka!"
+
 	router.GET("/", func(c *gin.Context) {
-		producer, err := sarama.NewSyncProducer([]string{"kafka:9092"}, nil)
+		err = producer.Publish(topic, message)
 
-		if err != nil {
-			log.Fatal("Error creating Kafka producer:", err)
-		}
-		defer producer.Close()
-
-		// Define the Kafka topic and message
-		topic := "test-topic"
-		message := "Hello, Kafka!"
-
-		// Produce the message to the Kafka topic
-		_, _, err = producer.SendMessage(&sarama.ProducerMessage{
-			Topic: topic,
-			Value: sarama.StringEncoder(message),
-		})
 		if err != nil {
 			log.Fatal("Error sending message:", err)
 		}
