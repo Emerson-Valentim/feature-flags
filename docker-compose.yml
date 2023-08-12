@@ -1,0 +1,42 @@
+version: '3.7'
+
+networks:
+  private:
+    driver: bridge
+
+services:
+  kafka:
+    image: 'bitnami/kafka:latest'
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    networks:
+      - private
+
+  rest:
+    build:
+      context: .
+      dockerfile: ./docker/local.Dockerfile
+    ports:
+      - '8080:8080'
+    env_file: ./apps/rest/.env
+    working_dir: "/usr/app/apps/rest"
+    volumes:
+      - .:/usr/app
+    networks:
+      - private
+
+  consumer:
+    build:
+      context: .
+      dockerfile: ./docker/local.Dockerfile
+    env_file: ./apps/consumer/.env
+    working_dir: "/usr/app/apps/consumer"
+    volumes:
+      - .:/usr/app
+    networks:
+      - private
