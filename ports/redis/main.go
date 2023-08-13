@@ -59,7 +59,7 @@ type DeleteInput struct {
 }
 
 func (conn *RedisConnection) Delete(input DeleteInput) error {
-	err := conn.rdb.FunctionDelete(conn.ctx, input.key).Err()
+	err := conn.rdb.Del(conn.ctx, input.key).Err()
 
 	if err != nil {
 		return errors.New("Failed to delete value")

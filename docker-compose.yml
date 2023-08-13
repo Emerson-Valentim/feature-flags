@@ -17,6 +17,22 @@ services:
     networks:
       - private
 
+  redis:
+    hostname: redis
+    image: 'bitnami/redis:latest'
+    restart: always
+    ports:
+      - '6379:6379'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    networks:
+      - private
+      
   rest:
     build:
       context: .
