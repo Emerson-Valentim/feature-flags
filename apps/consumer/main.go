@@ -15,7 +15,7 @@ func main() {
 
 	topic := "test-topic"
 
-	err = consumer.Start(topic, 0, onMessage)
+	err = consumer.Start(topic, onMessage)
 
 	if err != nil {
 		log.Fatal("Error consuming partition:", err)

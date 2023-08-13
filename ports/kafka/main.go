@@ -75,7 +75,7 @@ func (pa *SaramaProducerAdapter) Publish(topic string, message string) error {
 	return err
 }
 
-func (ca *SaramaConsumerAdapter) Start(topic string, partition int32, onMessage OnMessage) error {
+func (ca *SaramaConsumerAdapter) Start(topic string, onMessage OnMessage) error {
 	ctx, _ := context.WithCancel(context.Background())
 
 	wrappedOnMessage := ConsumerWrapper{
@@ -97,7 +97,7 @@ type ProducerInterface interface {
 }
 
 type ConsumerInterface interface {
-	Start(topic string, partition int32, onMessage OnMessage) error
+	Start(topic string, onMessage OnMessage) error
 }
 
 func (conn KafkaConnection) Consumer() (ConsumerInterface, error) {

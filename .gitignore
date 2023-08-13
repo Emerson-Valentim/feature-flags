@@ -18,3 +18,5 @@
 
 # Ignore logs
 *.log
+
+apps/*/tmp/
