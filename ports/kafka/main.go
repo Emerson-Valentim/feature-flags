@@ -34,16 +34,16 @@ type ConsumerWrapper struct {
 	onMessage OnMessage
 }
 
-func (consumer ConsumerWrapper) Setup(sarama.ConsumerGroupSession) error {
+func (consumer *ConsumerWrapper) Setup(sarama.ConsumerGroupSession) error {
 	close(consumer.ready)
 	return nil
 }
 
-func (consumer ConsumerWrapper) Cleanup(sarama.ConsumerGroupSession) error {
+func (consumer *ConsumerWrapper) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (consumer ConsumerWrapper) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+func (consumer *ConsumerWrapper) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 
 	for {
 		select {
@@ -83,7 +83,7 @@ func (ca *SaramaConsumerAdapter) Start(topic string, onMessage OnMessage) error 
 		onMessage: onMessage,
 	}
 
-	err := ca.Consume(ctx, []string{topic}, wrappedOnMessage)
+	err := ca.Consume(ctx, []string{topic}, &wrappedOnMessage)
 
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ type ConsumerInterface interface {
 	Start(topic string, onMessage OnMessage) error
 }
 
-func (conn KafkaConnection) Consumer() (ConsumerInterface, error) {
+func (conn *KafkaConnection) Consumer() (ConsumerInterface, error) {
 	config := sarama.NewConfig()
 	config.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategyRoundRobin()}
 
@@ -115,7 +115,7 @@ func (conn KafkaConnection) Consumer() (ConsumerInterface, error) {
 	return &SaramaConsumerAdapter{consumer}, nil
 }
 
-func (conn KafkaConnection) Producer() (ProducerInterface, error) {
+func (conn *KafkaConnection) Producer() (ProducerInterface, error) {
 	producer, err := sarama.NewSyncProducer([]string{conn.Host}, nil)
 
 	if err != nil {
