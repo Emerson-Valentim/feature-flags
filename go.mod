@@ -3,14 +3,17 @@ module feature-flag/go
 go 1.18
 
 require (
-  github.com/gin-gonic/gin v1.9.1
 	github.com/IBM/sarama v1.40.1
+	github.com/gin-gonic/gin v1.9.1
+	github.com/redis/go-redis/v9 v9.0.5
 )
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/eapache/go-resiliency v1.3.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
