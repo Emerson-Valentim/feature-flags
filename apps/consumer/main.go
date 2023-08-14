@@ -13,7 +13,7 @@ func main() {
 
 	consumer, err := kafkaConnector.Consumer()
 
-	topic := "test-topic"
+	topic := "feature-flag"
 
 	err = consumer.Start(topic, onMessage)
 

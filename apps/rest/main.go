@@ -1,37 +1,66 @@
 package main
 
 import (
+	"feature-flag/go/domains/flags"
 	"feature-flag/go/ports/kafka"
-	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
+var topic = "feature-flag"
+
 func main() {
 	router := gin.Default()
-
 	kafkaConnector := kafka.NewKafkaConnection("kafka:9092", "never-mind")
 
 	producer, err := kafkaConnector.Producer()
+	flagsDomain, err := flags.NewFlags("redis:6379")
 
-	topic := "test-topic"
-	message := "Hello, Kafka!"
+	if err != nil {
+		log.Fatal("Error creating flag domain")
+	}
 
-	router.GET("/", func(c *gin.Context) {
-		err = producer.Publish(topic, message)
+	if err != nil {
+		log.Fatal("Error creating kafka producer")
+	}
+
+	router.POST("/v1/flag", postFlag(producer, flagsDomain))
+
+	router.Run(":8080")
+}
+
+type PostFlagReq struct {
+	Name string
+}
+
+func postFlag(producer kafka.ProducerInterface, flagsDomain flags.FlagsDomain) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var body PostFlagReq
+		c.BindJSON(&body)
+
+		flag, err := flagsDomain.Create(flags.CreateInput{
+			Name: body.Name,
+		})
 
 		if err != nil {
-			log.Fatal("Error sending message:", err)
+			c.JSON(500, gin.H{
+				"message": "Internal server error",
+			})
+
+			return
 		}
 
-		fmt.Println("Message sent successfully!")
+		err = producer.Publish(topic, "Creating new flag")
 
-		c.JSON(200, gin.H{
-			"message": "Hello, Gin!",
-		})
-	})
+		if err != nil {
+			c.JSON(500, gin.H{
+				"message": "Internal server error",
+			})
 
-	// Run the server on port 8080
-	router.Run(":8080")
+			return
+		}
+
+		c.JSON(200, flag)
+	}
 }
