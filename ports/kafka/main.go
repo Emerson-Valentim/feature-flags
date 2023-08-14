@@ -2,6 +2,8 @@ package kafka
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 
 	"github.com/IBM/sarama"
@@ -44,7 +46,6 @@ func (consumer *ConsumerWrapper) Cleanup(sarama.ConsumerGroupSession) error {
 }
 
 func (consumer *ConsumerWrapper) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-
 	for {
 		select {
 		case message, ok := <-claim.Messages():
@@ -102,14 +103,17 @@ type ConsumerInterface interface {
 
 func (conn *KafkaConnection) Consumer() (ConsumerInterface, error) {
 	config := sarama.NewConfig()
+	config.Admin.Retry.Max = 3
 	config.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategyRoundRobin()}
 
-	consumer, err := sarama.NewConsumerGroup([]string{"kafka:9092"}, conn.GroupId, config)
+	consumer, err := sarama.NewConsumerGroup([]string{conn.Host}, conn.GroupId, config)
 
 	if err != nil {
-		log.Fatal("Error creating Kafka consumer:", err)
+		msg := "Error creating Kafka consumer"
 
-		return nil, err
+		fmt.Printf(msg, err)
+
+		return nil, errors.New(msg)
 	}
 
 	return &SaramaConsumerAdapter{consumer}, nil
@@ -119,9 +123,11 @@ func (conn *KafkaConnection) Producer() (ProducerInterface, error) {
 	producer, err := sarama.NewSyncProducer([]string{conn.Host}, nil)
 
 	if err != nil {
-		log.Fatal("Error creating Kafka producer:", err)
+		msg := "Error creating Kafka producer"
 
-		return nil, err
+		fmt.Printf(msg, err)
+
+		return nil, errors.New(msg)
 	}
 
 	return &SaramaProducerAdapter{producer}, nil
