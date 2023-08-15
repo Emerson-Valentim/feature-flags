@@ -29,13 +29,14 @@ func main() {
 
 	router.GET("/v1/flag/:id", getFlag(flagsDomain))
 	router.POST("/v1/flag", postFlag(producer, flagsDomain))
+	router.PATCH("/v1/flag/:id", updateFlag(producer, flagsDomain))
 	router.DELETE("/v1/flag/:id", deleteFlag(producer, flagsDomain))
 
 	router.Run(":8080")
 }
 
 type PostFlagReq struct {
-	Name string
+	Name string `json:"name"`
 }
 
 func getFlag(flagsDomain flags.FlagsDomain) func(c *gin.Context) {
@@ -83,6 +84,50 @@ func postFlag(producer kafka.ProducerInterface, flagsDomain flags.FlagsDomain) f
 		}
 
 		err = producer.Publish(topic, "Creating new flag")
+
+		if err != nil {
+			fmt.Println("failed to publish event")
+		}
+
+		c.JSON(200, flag)
+	}
+}
+
+type UpdateFlagReq struct {
+	Name  string `json:"name,omitempty"`
+	State *bool  `json:"state,omitempty"`
+}
+
+func updateFlag(producer kafka.ProducerInterface, flagsDomain flags.FlagsDomain) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		var body UpdateFlagReq
+		c.BindJSON(&body)
+
+		flag, err := flagsDomain.Update(id, flags.UpdateInput{
+			State: body.State,
+			Name:  body.Name,
+		})
+
+		if err != nil {
+			msg := err.Error()
+
+			if msg == "not found" {
+				c.JSON(404, gin.H{
+					"message": id + " not found",
+				})
+				return
+			}
+
+			c.JSON(500, gin.H{
+				"message": "Internal server error",
+			})
+
+			return
+		}
+
+		err = producer.Publish(topic, "Updating flag")
 
 		if err != nil {
 			fmt.Println("failed to publish event")

@@ -21,7 +21,7 @@ type CreateFun func(input CreateInput) (*Flag, error)
 type GetFun func(id string) (*Flag, error)
 
 type UpdateInput struct {
-	State bool
+	State *bool
 	Name  string
 }
 type UpdateFun func(id string, input UpdateInput) (*Flag, error)
@@ -63,7 +63,7 @@ func create(R *repository.Repository) CreateFun {
 		databaseFlag, err := R.Insert(repository.FlagEntity{
 			Id:    id,
 			Name:  name,
-			State: state,
+			State: &state,
 		})
 
 		if err != nil {
@@ -73,7 +73,7 @@ func create(R *repository.Repository) CreateFun {
 		flag := Flag{
 			Id:    databaseFlag.Id,
 			Name:  databaseFlag.Name,
-			State: databaseFlag.State,
+			State: *databaseFlag.State,
 		}
 
 		return &flag, nil
@@ -91,7 +91,7 @@ func get(R *repository.Repository) GetFun {
 		flag := Flag{
 			Id:    databaseFlags[0].Id,
 			Name:  databaseFlags[0].Name,
-			State: databaseFlags[0].State,
+			State: *databaseFlags[0].State,
 		}
 
 		return &flag, nil
@@ -106,14 +106,14 @@ func update(R *repository.Repository) UpdateFun {
 			State: input.State,
 		})
 
+		if err != nil {
+			return nil, err
+		}
+
 		flag := Flag{
 			Id:    databaseFlag.Id,
 			Name:  databaseFlag.Name,
-			State: databaseFlag.State,
-		}
-
-		if err != nil {
-			return nil, err
+			State: *databaseFlag.State,
 		}
 
 		return &flag, nil

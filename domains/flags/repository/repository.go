@@ -3,7 +3,7 @@ package repository
 type FlagEntity struct {
 	Id    string
 	Name  string
-	State bool
+	State *bool
 }
 
 type InsertFun func(flag FlagEntity) (*FlagEntity, error)

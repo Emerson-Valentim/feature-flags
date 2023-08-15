@@ -100,16 +100,36 @@ func update(rdb *redis.RedisConnection) UpdateFun {
 		json.Unmarshal(cachedFlag, &decodedFlag)
 
 		updatedName := flag.Name
+		updatedState := flag.State
+
+		log.Println("here", updatedName, len(updatedName) == 0)
 
 		if len(updatedName) == 0 {
 			updatedName = decodedFlag.Name
 		}
 
+		if updatedState == nil {
+			updatedState = decodedFlag.State
+		}
+
+		println(updatedState)
+
 		updatedFlag := FlagEntity{
 			Id:    decodedFlag.Id,
 			Name:  updatedName,
-			State: flag.State || decodedFlag.State,
+			State: updatedState,
 		}
+
+		encodedFlag, err := json.Marshal(updatedFlag)
+
+		if err != nil {
+			return nil, err
+		}
+
+		rdb.Set(redis.SetInput{
+			Key:   flag.Id,
+			Value: encodedFlag,
+		})
 
 		return &updatedFlag, nil
 	}
