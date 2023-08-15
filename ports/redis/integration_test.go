@@ -30,7 +30,7 @@ func TestSet(t *testing.T) {
 	key := "test-key"
 	value := []byte("test-value")
 
-	err = conn.Set(SetInput{key: key, value: value})
+	err = conn.Set(SetInput{Key: key, Value: value})
 	assert.Nil(t, err)
 }
 
@@ -43,7 +43,7 @@ func TestGet(t *testing.T) {
 	key := "test-key"
 	value := []byte("test-value")
 
-	retrievedValue, err := conn.Get(GetInput{key: key})
+	retrievedValue, err := conn.Get(GetInput{Key: key})
 	assert.Nil(t, err)
 	assert.Equal(t, value, retrievedValue)
 }
@@ -56,9 +56,9 @@ func TestDelete(t *testing.T) {
 
 	key := "test-key"
 
-	err = conn.Delete(DeleteInput{key: key})
+	err = conn.Delete(DeleteInput{Key: key})
 	assert.Nil(t, err)
 
-	_, err = conn.Get(GetInput{key: key})
+	_, err = conn.Get(GetInput{Key: key})
 	assert.NotNil(t, err)
 }

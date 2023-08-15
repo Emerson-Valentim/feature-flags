@@ -26,43 +26,55 @@ func NewRedisConnection(host string) (*RedisConnection, error) {
 }
 
 type SetInput struct {
-	key   string
-	value []byte
+	Key   string
+	Value []byte
 }
 
 func (conn *RedisConnection) Set(input SetInput) error {
-	err := conn.rdb.Set(conn.ctx, input.key, input.value, 0).Err()
+	err := conn.rdb.Set(conn.ctx, input.Key, input.Value, 0).Err()
 
 	if err != nil {
-		return errors.New("Failed to set value")
+		return errors.New("failed to set value")
 	}
 
 	return nil
 }
 
 type GetInput struct {
-	key string
+	Key string
 }
 
 func (conn *RedisConnection) Get(input GetInput) ([]byte, error) {
-	value, err := conn.rdb.Get(conn.ctx, input.key).Result()
+	value, err := conn.rdb.Get(conn.ctx, input.Key).Result()
 
 	if err != nil {
-		return nil, errors.New("Failed to get value")
+		msg := err.Error()
+
+		isNotFound := msg == "redis: nil"
+
+		if isNotFound {
+			msg = "not found"
+		}
+
+		return nil, errors.New(msg)
 	}
 
 	return []byte(value), nil
 }
 
 type DeleteInput struct {
-	key string
+	Key string
 }
 
 func (conn *RedisConnection) Delete(input DeleteInput) error {
-	err := conn.rdb.Del(conn.ctx, input.key).Err()
+	result, err := conn.rdb.Del(conn.ctx, input.Key).Result()
 
 	if err != nil {
-		return errors.New("Failed to delete value")
+		return errors.New("failed to delete value")
+	}
+
+	if result == 0 {
+		return errors.New("not found")
 	}
 
 	return nil
