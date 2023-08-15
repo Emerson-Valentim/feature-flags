@@ -16,15 +16,15 @@ type Flag struct {
 type CreateInput struct {
 	Name string
 }
-type CreateFun func(input CreateInput) (Flag, error)
+type CreateFun func(input CreateInput) (*Flag, error)
 
-type GetFun func(id string) (Flag, error)
+type GetFun func(id string) (*Flag, error)
 
 type UpdateInput struct {
 	State bool
 	Name  string
 }
-type UpdateFun func(id string, input UpdateInput) (Flag, error)
+type UpdateFun func(id string, input UpdateInput) (*Flag, error)
 
 type DeleteFun func(id string) error
 
@@ -55,7 +55,7 @@ func Flags(R *repository.Repository) FlagsDomain {
 }
 
 func create(R *repository.Repository) CreateFun {
-	return func(input CreateInput) (Flag, error) {
+	return func(input CreateInput) (*Flag, error) {
 		id := uuid.New().String()
 		name := input.Name
 		state := false
@@ -66,23 +66,27 @@ func create(R *repository.Repository) CreateFun {
 			State: state,
 		})
 
+		if err != nil {
+			return nil, err
+		}
+
 		flag := Flag{
 			Id:    databaseFlag.Id,
 			Name:  databaseFlag.Name,
 			State: databaseFlag.State,
 		}
 
-		if err != nil {
-			return flag, err
-		}
-
-		return flag, nil
+		return &flag, nil
 	}
 }
 
 func get(R *repository.Repository) GetFun {
-	return func(id string) (Flag, error) {
+	return func(id string) (*Flag, error) {
 		databaseFlags, err := R.Find([]string{id})
+
+		if err != nil {
+			return nil, err
+		}
 
 		flag := Flag{
 			Id:    databaseFlags[0].Id,
@@ -90,16 +94,12 @@ func get(R *repository.Repository) GetFun {
 			State: databaseFlags[0].State,
 		}
 
-		if err != nil {
-			return flag, err
-		}
-
-		return flag, nil
+		return &flag, nil
 	}
 }
 
 func update(R *repository.Repository) UpdateFun {
-	return func(id string, input UpdateInput) (Flag, error) {
+	return func(id string, input UpdateInput) (*Flag, error) {
 		databaseFlag, err := R.Update(repository.FlagEntity{
 			Id:    id,
 			Name:  input.Name,
@@ -113,10 +113,10 @@ func update(R *repository.Repository) UpdateFun {
 		}
 
 		if err != nil {
-			return flag, err
+			return nil, err
 		}
 
-		return flag, nil
+		return &flag, nil
 	}
 }
 
