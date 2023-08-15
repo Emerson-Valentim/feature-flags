@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"encoding/json"
 	"feature-flag/go/ports/redis"
 	"log"
 )
@@ -21,29 +22,95 @@ func NewRedisAdapter(host string) (Repository, error) {
 }
 
 func insert(rdb *redis.RedisConnection) InsertFun {
-	return func(flag FlagEntity) (FlagEntity, error) {
-		log.Printf("Inserting")
-		return flag, nil
+	return func(flag FlagEntity) (*FlagEntity, error) {
+		encodedFlag, err := json.Marshal(flag)
+
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = rdb.Get(redis.GetInput{
+			Key: flag.Id,
+		})
+
+		if err == nil {
+			return nil, err
+		}
+
+		rdb.Set(redis.SetInput{
+			Key:   flag.Id,
+			Value: encodedFlag,
+		})
+
+		return &flag, nil
 	}
 }
 
 func find(rdb *redis.RedisConnection) FindFun {
 	return func(ids []string) ([]FlagEntity, error) {
-		log.Printf("Finding")
-		return nil, nil
+		var flags []FlagEntity
+
+		for _, value := range ids {
+
+			cachedFlag, err := rdb.Get(redis.GetInput{
+				Key: value,
+			})
+
+			var decodedFlag FlagEntity
+
+			json.Unmarshal(cachedFlag, &decodedFlag)
+
+			if err != nil {
+				return nil, err
+			}
+
+			flags = append(flags, decodedFlag)
+		}
+
+		return flags, nil
 	}
 }
 
 func delete(rdb *redis.RedisConnection) DeleteFun {
 	return func(id string) error {
-		log.Printf("Deleting")
+		err := rdb.Delete(redis.DeleteInput{
+			Key: id,
+		})
+
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 }
 
 func update(rdb *redis.RedisConnection) UpdateFun {
-	return func(flag FlagEntity) (FlagEntity, error) {
-		log.Printf("Updating")
-		return flag, nil
+	return func(flag FlagEntity) (*FlagEntity, error) {
+		cachedFlag, err := rdb.Get(redis.GetInput{
+			Key: flag.Id,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		var decodedFlag FlagEntity
+
+		json.Unmarshal(cachedFlag, &decodedFlag)
+
+		updatedName := flag.Name
+
+		if len(updatedName) == 0 {
+			updatedName = decodedFlag.Name
+		}
+
+		updatedFlag := FlagEntity{
+			Id:    decodedFlag.Id,
+			Name:  updatedName,
+			State: flag.State || decodedFlag.State,
+		}
+
+		return &updatedFlag, nil
 	}
 }
