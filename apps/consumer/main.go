@@ -13,6 +13,10 @@ func main() {
 
 	consumer, err := kafkaConnector.Consumer()
 
+	if err != nil {
+		log.Fatal("Error connecting:", err)
+	}
+
 	topic := "feature-flag"
 
 	err = consumer.Start(topic, onMessage)
