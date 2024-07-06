@@ -1,3 +1,0 @@
-# Test recursive
-
-go test -cover ./...
